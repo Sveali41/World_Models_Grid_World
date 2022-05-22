@@ -1,0 +1,5 @@
+procgen
+gym3
+hydra-core
+python-dotenv
+matplotlib
