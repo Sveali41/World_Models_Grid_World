@@ -4,6 +4,7 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 import numpy as np
 from src.common.utils import PROJECT_ROOT
+import random
 
 def run_env(cfg: DictConfig):
     print(OmegaConf.to_yaml(cfg))
@@ -16,24 +17,32 @@ def run_env(cfg: DictConfig):
                         render_mode = "rgb_array", #to visualize it
                     )
 
-    if (cfg.env.visualize): #set to false to hide the gui
-        env = gym3.ViewerWrapper(env, info_key="rgb") 
-
     print("action space")
     print(env.ac_space) # action space
     print("combos")
     print(env.combos) # all the available combinations of actions under form of combos
 
+    if (cfg.env.visualize): #set to false to hide the gui
+        env = gym3.ViewerWrapper(env, info_key="rgb") 
+
     obs_list, act_list = [], []
     episodes=0
+    from_first = 0
     for step in range(cfg.collect.steps):
+        from_first+=1
         act = gym3.types_np.sample(env.ac_space, bshape=(env.num,))
         env.act(act)
         rew, obs, first = env.observe()
+        #to have a more solid dataset: we save only 10% of the first steps
+        if from_first < 50:
+            rand = random.uniform(0,1)
+            if rand > 0.1:
+                continue
         act_list.append(act)
         obs_list.append(obs['rgb'])
-        print(f"step {step} reward {rew} first {first}")
         if first[0]:
+            print(f"step {step} reward {rew} first {first}")
+            from_first=0
             episodes+=1
     obs_np = np.concatenate(obs_list)
     act_np = np.concatenate(act_list)
