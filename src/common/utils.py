@@ -5,6 +5,8 @@ from typing import Sequence
 import dotenv
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf
+import hydra
 
 def get_env(env_name: str, default: Optional[str] = None) -> str:
     """
@@ -38,6 +40,7 @@ def load_envs(env_file: Optional[str] = '.env') -> None:
                      it searches for a `.env` file in the project.
     """
     dotenv.load_dotenv(dotenv_path=env_file, override=True)
+
 
 load_envs()
 

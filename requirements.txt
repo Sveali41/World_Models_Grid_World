@@ -1,5 +1,14 @@
-procgen
-gym3
-hydra-core
-python-dotenv
-matplotlib
+procgen==0.10.7
+gym3==0.3.3
+hydra-core==1.2.0
+python-dotenv==0.20.0
+matplotlib==3.5.2
+torch==1.10.0+cu111
+torchvision==0.11.0+cu111
+tqdm==4.63.0
+numpy==1.21.5
+setuptools==59.5.0
+pytorch-lightning==1.6.3
+
+# package location
+--find-links https://download.pytorch.org/whl/torch_stable.html

@@ -8,4 +8,5 @@ setup(
         url='https://github.com/DennisRotondi/dlai_project',
         packages=find_packages(),
         data_files=[('.', ['.env'])],
+        #I prefer all here, but for this project I'll follow the template "env" trick.
     )
