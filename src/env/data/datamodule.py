@@ -38,14 +38,15 @@ class WMRLDataModule(pl.LightningDataModule):
         self.data_dir = data_dir
         self.save_hyperparameters(hparams)
         print(self.hparams)
+        
     def setup(self, stage: Optional[str] = None):
         loaded = np.load(self.data_dir)
         obs = loaded['a']
         act = loaded['b']
         data = WMRLDataset(obs,act,self.hparams)
-        size_split = int(len(data)*10/11)
-        self.data_train = data[:size_split]
-        self.data_test = data[size_split:]
+        split_size=int(len(data)*0.99)
+        self.data_train, self.data_test = torch.utils.data.random_split(data, \
+                                        [split_size, len(data)-split_size])
 
     def train_dataloader(self):
         return DataLoader(
@@ -53,7 +54,8 @@ class WMRLDataModule(pl.LightningDataModule):
                 batch_size = self.hparams.batch_size, 
                 shuffle = True,
                 num_workers = self.hparams.n_cpu,
-                pin_memory=True
+                pin_memory=True,
+                persistent_workers=True
             )
 
     def val_dataloader(self):
@@ -62,6 +64,7 @@ class WMRLDataModule(pl.LightningDataModule):
                 batch_size = self.hparams.batch_size, 
                 shuffle = False,
                 num_workers = self.hparams.n_cpu,
-                pin_memory=True
+                pin_memory=True,
+                persistent_workers=True
             )
 
