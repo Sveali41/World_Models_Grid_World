@@ -8,9 +8,11 @@ torchvision==0.11.0+cu111
 tqdm==4.63.0
 numpy==1.21.5
 gym[box2d]
+gym[atari]
+gym[accept-rom-license]
 wandb
 setuptools==59.5.0
 pytorch-lightning==1.6.3
-
+gym-minigrid
 # package location
 --find-links https://download.pytorch.org/whl/torch_stable.html
