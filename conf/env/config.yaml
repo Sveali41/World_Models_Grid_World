@@ -2,9 +2,10 @@ env:
   env_name: plunder # Name of environment, or comma-separate list of environment names to instantiate as each env in the VecEnv.
   num_levels: 0 # The number of unique levels that can be generated. Set to 0 to use unlimited levels.
   start_level: 0 # The lowest seed that will be used to generated levels. 'start_level' and 'num_levels' fully specify the set of possible levels.
-  distribution_mode: hard # All games support "easy" and "hard", while other options are game-specific. The default is "hard". Switching to "easy" will reduce the number of timesteps required to solve each game and is useful for testing or when working with limited compute resources.
+  distribution_mode: easy # All games support "easy" and "hard", while other options are game-specific. The default is "hard". Switching to "easy" will reduce the number of timesteps required to solve each game and is useful for testing or when working with limited compute resources.
   visualize: False
   use_backgrounds: False
 collect:
-  steps: 1000000
-  data_train: ${oc.env:TRAIN_DATASET_PATH}/train_dataset.npz
+  steps: 500000
+  episodes: 3000
+  data_train: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz

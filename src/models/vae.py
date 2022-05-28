@@ -6,60 +6,54 @@ import wandb
 import torchvision.utils
 import pytorch_lightning as pl
 from typing import Sequence, List, Dict, Tuple, Optional, Any, Set, Union, Callable, Mapping
-# code based on https://github.com/ctallec/world-model, https://github.com/Deepest-Project/WorldModels-A3C
-# and notebooks shown in class
-
-class Encoder(nn.Module):
-    def __init__(self, in_channels, latent_dims):
-        super(Encoder, self).__init__()
-        # flatten_dims = hp.img_height//2**4
-        self.latent_dims = latent_dims
-        self.encoder = nn.Sequential(
-            nn.Conv2d(in_channels, 32, 3, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 32, 48, 48)
-            nn.Conv2d(32, 64, 3, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 64, 24, 24)
-            nn.Conv2d(64, 128, 3, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 128, 12, 12)
-            nn.Conv2d(128, 256, 3, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 256, 6, 6)
-        )
-        self.fc = nn.Linear(6*6*256, latent_dims*2)
-        self.softplus = nn.Softplus()
-
-    def forward(self, x):
-        h = self.encoder(x)
-        h = h.view(h.size(0), -1) # (B, d)
-        h = self.fc(h) # (B, )
-        mu = h[:, :self.latent_dims]
-        logvar = h[:, self.latent_dims:]
-        # sigma = self.softplus(h[:, self.latent_dims:])
-        return mu, logvar
+#code based on https://github.com/ctallec/world-models and vae notebook, this is the structure illustrated in the paper
 
 class Decoder(nn.Module):
-    def __init__(self, out_channels, latent_dims):
+    """ VAE decoder """
+    def __init__(self, img_channels, latent_size):
         super(Decoder, self).__init__()
-        self.fc = nn.Linear(latent_dims, 1024)
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(256, 128, 6, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 128, 6, 6)
-            nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 64, 12, 12)
-            nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 32, 24, 24)
-            nn.ConvTranspose2d(32, 32, 4, stride=2, padding=1),
-            nn.LeakyReLU(), # (B, 32, 48, 48)
-            nn.ConvTranspose2d(32, out_channels, 4, stride=2, padding=1),
-            # nn.Tanh()
-            nn.Sigmoid()
-            # nn.LeakyReLU(), # (B, c, 96, 96)
-        )
+        self.latent_size = latent_size
+        self.img_channels = img_channels
 
-    def forward(self, z):
-        h = self.fc(z)
-        h = h.view(h.size(0), -1, 2, 2)
-        y = self.decoder(h)
-        return y   
+        self.fc1 = nn.Linear(latent_size, 1024)
+        self.deconv1 = nn.ConvTranspose2d(1024, 128, 5, stride=2)
+        self.deconv2 = nn.ConvTranspose2d(128, 64, 5, stride=2)
+        self.deconv3 = nn.ConvTranspose2d(64, 32, 6, stride=2)
+        self.deconv4 = nn.ConvTranspose2d(32, img_channels, 6, stride=2)
+
+    def forward(self, x): # pylint: disable=arguments-differ
+        x = F.relu(self.fc1(x))
+        x = x.unsqueeze(-1).unsqueeze(-1)
+        x = F.relu(self.deconv1(x))
+        x = F.relu(self.deconv2(x))
+        x = F.relu(self.deconv3(x))
+        reconstruction = torch.sigmoid(self.deconv4(x))
+        return reconstruction
+
+class Encoder(nn.Module): # pylint: disable=too-many-instance-attributes
+    """ VAE encoder """
+    def __init__(self, img_channels, latent_size):
+        super(Encoder, self).__init__()
+        self.latent_size = latent_size
+        self.img_channels = img_channels
+        self.conv1 = nn.Conv2d(img_channels, 32, 4, stride=2)
+        self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
+        self.conv3 = nn.Conv2d(64, 128, 4, stride=2)
+        self.conv4 = nn.Conv2d(128, 256, 4, stride=2)
+        self.fc_mu = nn.Linear(2*2*256, latent_size)
+        self.fc_logsigma = nn.Linear(2*2*256, latent_size)
+
+    def forward(self, x): 
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
+        x = x.view(x.size(0), -1)
+
+        mu = self.fc_mu(x)
+        logsigma = self.fc_logsigma(x)
+
+        return mu, logsigma     
 
 class VAE(pl.LightningModule):
     """ Variational Autoencoder """
@@ -92,11 +86,20 @@ class VAE(pl.LightningModule):
         }
 
     def loss_function(self,recon_x, x, mu, logsigma):
-        # (from notebook) You can look at the derivation of the KL term here https://arxiv.org/pdf/1907.08956.pdf
-        # another reference https://arxiv.org/abs/1312.6114
+        """ VAE loss function """
+        #original
         BCE = F.mse_loss(recon_x, x, reduction='sum')
-        KLD = -0.5 * torch.sum(1 + logsigma - mu.pow(2) - logsigma.exp())
-        return {"loss": BCE + KLD, "BCE": BCE, "KLD": KLD}
+        #from notebook
+        #BCE = F.binary_cross_entropy(recon_x.view(-1, 12288), x.view(-1, 12288), reduction='sum')
+        # see Appendix B from VAE paper:
+        # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+        # https://arxiv.org/abs/1312.6114
+        # (from notebook) You can look at the derivation of the KL term here https://arxiv.org/pdf/1907.08956.pdf
+        #KLD = -0.5 * torch.sum(1 + logsigma - mu.pow(2) - logsigma.exp())
+        # original
+        KLD = -0.5 * torch.sum(1 + 2 * logsigma - mu.pow(2) - (2 * logsigma).exp())
+        beta = 0.0001
+        return {"loss": BCE + beta*KLD, "BCE": BCE, "KLD": KLD}
 
     def training_step(self, batch, batch_idx):
         obs = batch['obs']
