@@ -7,13 +7,23 @@ vae:
   lr: 1e-3
   wd: 1e-5
   log_images: 24
-  n_epochs: 100
   data_dir: ${oc.env:TRAIN_DATASET_PATH}/gridworld.npz
+  pth_folder: ${oc.env:PTH_FOLDER}/vae.pth
+  seq_len: 1 #sequence length for each dataset item
+  n_epochs: 90 #number of training epochs
 
-mdrnn:
-  latents: ${vae.latent_size} #latent size, the same we use for vae
-  actions: 3
-  hiddens: 256 #hidden size
-  gaussians: 5
-  rewards_terminal: False
-  n_epochs: 20
+mdnrnn:
+  latent_size: ${vae.latent_size} #latent size, the same we use for vae
+  action_size: 1 #the dimension of the action space, eg [1,2,3] has is in R^3 space
+  batch_size: 64
+  n_cpu: 8
+  hidden_size: 256 #hidden size
+  n_gaussians: 5
+  log_images: 24
+  data_dir: ${vae.data_dir}
+  seq_len: 4 #sequence length for each dataset item
+  n_epochs: 100 # number of training epochs
+  lr: 1e-3
+  wd: 1e-5
+  num_layers: 3 #layers for lstm
+  pth_folder: ${oc.env:PTH_FOLDER}/mdnrnn.pth

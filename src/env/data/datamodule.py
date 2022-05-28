@@ -8,22 +8,39 @@ import src.env.run_env_save as env_run_save
 import numpy as np
 import torch
 
-
 class WMRLDataset(Dataset):
-    def __init__(self, obs,act,hparams):
-        self.data = self.make_data(obs,act)
+    def __init__(self,loaded ,hparams):
         self.hparams = hparams
+        self.data = self.make_data(loaded)
         
-    def make_data(self,obs,act):
+    def make_data(self,loaded):
+        obs = loaded['a']
+        act = loaded['b']
+        rew = loaded['c']
+        done = loaded['d']
         transform = transforms.Compose([
-                            transforms.ToPILImage(),
-                            transforms.ToTensor(),#https://pytorch.org/vision/main/generated/torchvision.transforms.ToTensor.html
-                        ])
+                        transforms.ToPILImage(),
+                        transforms.ToTensor(),#https://pytorch.org/vision/main/generated/torchvision.transforms.ToTensor.html
+                    ])
         data = []
-        for idx in range(obs.shape[0]):
-            obs_t = transform(obs[idx])
-            act_t = torch.tensor(act[idx])
-            data.append({"obs":obs_t,"act":act_t})
+        len = obs.shape[0]
+        # length of the sequence ls is a variable for readability, +1 because 
+        # for the training item we want to split in [0:seq] [1:seq+1]
+        ls = self.hparams.seq_len+1 
+        if ls > 2:
+            # if the size is greater than 2 we construct a "sequence" dataset
+            for idx in range(len-ls):
+                obs_t = torch.stack([transform(obs[i]) for i in range(idx,idx+ls)])
+                #we only need ls-1 actions, because the last pred is needed for prediction
+                act_t = torch.tensor([[act[i]] for i in range(idx,idx+ls-1)]) 
+                rew_t = torch.tensor([[rew[i]] for i in range(idx,idx+ls)]) 
+                done_t = torch.tensor([[done[i]] for i in range(idx,idx+ls)]) 
+                data.append({"obs":obs_t, "act":act_t, "rew":rew_t, "done":done_t})
+        else:
+            for idx in range(len):
+                obs_t = transform(obs[idx])
+                act_t = torch.tensor(act[idx])
+                data.append({"obs":obs_t,"act":act_t})
         return data
 
     def __len__(self):
@@ -33,18 +50,16 @@ class WMRLDataset(Dataset):
         return self.data[idx]
 
 class WMRLDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str = get_env("TRAIN_DATASET_PATH")+"/train_dataset.npz", hparams = None):
+    def __init__(self, hparams = None):
         super().__init__()
-        self.data_dir = data_dir
         self.save_hyperparameters(hparams)
+        self.data_dir = self.hparams.data_dir
         print(self.hparams)
         
     def setup(self, stage: Optional[str] = None):
         loaded = np.load(self.data_dir)
-        obs = loaded['a']
-        act = loaded['b']
-        data = WMRLDataset(obs,act,self.hparams)
-        split_size=int(len(data)*0.99)
+        data = WMRLDataset(loaded,self.hparams)
+        split_size=int(len(data)*9/10)
         self.data_train, self.data_test = torch.utils.data.random_split(data, \
                                         [split_size, len(data)-split_size])
 
