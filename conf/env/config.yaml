@@ -1,4 +1,4 @@
-env: 
+env: #these settings are mostly for procgames
   env_name: plunder # Name of environment, or comma-separate list of environment names to instantiate as each env in the VecEnv.
   num_levels: 0 # The number of unique levels that can be generated. Set to 0 to use unlimited levels.
   start_level: 0 # The lowest seed that will be used to generated levels. 'start_level' and 'num_levels' fully specify the set of possible levels.
@@ -8,4 +8,4 @@ env:
 collect:
   steps: 500000
   episodes: 3000
-  data_train: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz
+  data_train: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz #folder where to save the rollouts

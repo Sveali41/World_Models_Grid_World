@@ -24,7 +24,7 @@ def train(cfg: DictConfig):
     metric_to_monitor = 'avg_val_loss_vae'#"loss"
     early_stop_callback = EarlyStopping(monitor=metric_to_monitor, min_delta=0.00, patience=15, verbose=True, mode="min")
     checkpoint_callback = ModelCheckpoint(
-                            save_top_k=2,
+                            save_top_k=1,
                             monitor = metric_to_monitor,
                             mode = "min",
                             dirpath = get_env('PTH_FOLDER'),
@@ -35,7 +35,6 @@ def train(cfg: DictConfig):
                         max_epochs=hparams.n_epochs, 
                         gpus=1,
                         callbacks=[early_stop_callback, checkpoint_callback])    
-
     # Start the training
     trainer.fit(vae,dataloader)
     # Log the trained model

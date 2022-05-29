@@ -16,8 +16,6 @@ class WMRLDataset(Dataset):
     def make_data(self,loaded):
         obs = loaded['a']
         act = loaded['b']
-        rew = loaded['c']
-        done = loaded['d']
         transform = transforms.Compose([
                         transforms.ToPILImage(),
                         transforms.ToTensor(),#https://pytorch.org/vision/main/generated/torchvision.transforms.ToTensor.html
@@ -28,13 +26,20 @@ class WMRLDataset(Dataset):
         # for the training item we want to split in [0:seq] [1:seq+1]
         ls = self.hparams.seq_len+1 
         if ls > 2:
+            # we need to set reward -1 0 1 in the correct range 0 1 2
+            rew = loaded['c'].astype(int)
+            rew[rew==1] = 2
+            rew[rew==0] = 1
+            rew[rew==-1] = 0
+            done = loaded['d'].astype(int) # to convert boolean values in binary 0-1
             # if the size is greater than 2 we construct a "sequence" dataset
             for idx in range(len-ls):
                 obs_t = torch.stack([transform(obs[i]) for i in range(idx,idx+ls)])
-                #we only need ls-1 actions, because the last pred is needed for prediction
+                # we only need ls-1 actions, because the last pred is needed for prediction
                 act_t = torch.tensor([[act[i]] for i in range(idx,idx+ls-1)]) 
-                rew_t = torch.tensor([[rew[i]] for i in range(idx,idx+ls)]) 
-                done_t = torch.tensor([[done[i]] for i in range(idx,idx+ls)]) 
+                # we want to predict the reward and terminal state after taking the action in the current state
+                rew_t = torch.tensor([[rew[i]] for i in range(idx,idx+ls-1)]) #dtype=torch.int64
+                done_t = torch.tensor([[done[i]] for i in range(idx,idx+ls-1)], dtype=torch.float32) #
                 data.append({"obs":obs_t, "act":act_t, "rew":rew_t, "done":done_t})
         else:
             for idx in range(len):
