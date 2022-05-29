@@ -1,3 +1,5 @@
+from asyncio.log import logger
+from functools import reduce
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -34,9 +36,13 @@ class MDNRNN(pl.LightningModule):
         self.n_layers = self.hparams.num_layers
         self.action_size = self.hparams.action_size
         self.lstm = nn.LSTM(self.z_size+self.action_size, self.n_hidden, self.n_layers, batch_first=True)
-        self.fc1 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size)
-        self.fc2 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size)
-        self.fc3 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size)
+        # I could have implemented only one linear layer here, to modularize better the network I decided to split it.
+        self.fc1 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size) # to compute pi
+        self.fc2 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size) # to compute mu
+        self.fc3 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size) # to compute sigma
+        #these are two classification problems (Must differentiate in case of different reward)
+        self.fc4 = nn.Linear(self.n_hidden, 3) # to estimate reward (-1, 0, +1)
+        self.fc5 = nn.Linear(self.n_hidden, 1) # to estimate terminate state (0, 1)
     
     def get_mixture_coef(self, y):
         rollout_length = y.size(1)
@@ -45,7 +51,7 @@ class MDNRNN(pl.LightningModule):
         mu = mu.view(-1, rollout_length, self.n_gaussians, self.z_size)
         sigma = sigma.view(-1, rollout_length, self.n_gaussians, self.z_size)
         pi = F.softmax(pi, 2)
-        sigma = torch.exp(sigma)
+        sigma = torch.exp(sigma) #to have positive values
         return pi, mu, sigma
     
     def forward(self, latents, actions):
@@ -53,7 +59,9 @@ class MDNRNN(pl.LightningModule):
         # Forward propagate LSTM
         y, (h, c) = self.lstm(x)
         pi, mu, sigma = self.get_mixture_coef(y)
-        return (pi, mu, sigma), (h, c)
+        rew = self.fc4(y) #it will be processed by the crossentropy loss
+        done = torch.sigmoid(self.fc5(y)) # done is a binary value, sigmoid is ideal here.
+        return (pi, mu, sigma, rew, done), (h, c)
 
     def mdn_loss_fn(self,y, mu, sigma, pi):
         # Actually, the loss is not lower bounded and the problem is actually ill-posed, 
@@ -63,12 +71,31 @@ class MDNRNN(pl.LightningModule):
         # many problems also in the original implementation, they saw that nothing change training or not the network.
         # check also the other references above, all have issues in this negative value, this is a huge cons of this method.
         y = y.unsqueeze(2)
-        m = torch.distributions.Normal(loc=mu, scale=sigma)
+        m = Normal(loc=mu, scale=sigma)
         loss = torch.exp(m.log_prob(y))
-        loss = torch.sum(loss * pi, dim=2)
+        loss = torch.sum(loss * pi, dim=2) #sum on gaussians dimension
         loss = -torch.log(loss)
-        return {'loss':loss.mean()}
+        return loss.mean()
+    
+    def done_loss(self, predict, original):
+        predict = predict.view(-1, predict.shape[-1])
+        original = original.view(-1, original.shape[-1])
+        return F.mse_loss(predict, original, reduction='mean')
 
+    def rew_loss(self, predict, original):
+        predict = predict.view(-1,predict.shape[-1])
+        original = original.view(-1)
+        # print(predict.shape)
+        # print(original.shape)
+        return F.cross_entropy(predict,original)
+
+    def loss_function(self, next_latent_obs, mu, sigma, pi, prew, rew, pdone, done):
+        MDNL = self.mdn_loss_fn(next_latent_obs, mu, sigma, pi)
+        DONEL = self.done_loss(pdone, done)
+        REWL = self.rew_loss(prew, rew)
+        logger_d = {'loss':MDNL+REWL+DONEL,'mdn_loss': MDNL, 'rew_loss': REWL, 'done_loss':DONEL}
+        return logger_d
+    
     def configure_optimizers(self):
         params = [p for p in self.parameters() if p.requires_grad]
         #RMSprop is recommended for RNNs
@@ -88,7 +115,7 @@ class MDNRNN(pl.LightningModule):
     def img2latent(self,obs):
         """ Function to go from image to latent space. """
         original_shape = obs.shape
-        obs = obs.reshape(-1,*obs.shape[2:])
+        obs = obs.reshape(-1,*original_shape[2:])
         with torch.no_grad():
             _, mu, logsigma = self.vae(obs)
             latent = (mu + logsigma.exp() * torch.randn_like(mu)).view(*original_shape[0:2], self.hparams.latent_size)
@@ -97,16 +124,15 @@ class MDNRNN(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         obs = batch['obs']
         act = batch['act']
-        # print("debug")
-        # print(act.shape)
-        # print(obs.shape)
+        rew = batch['rew']
+        done = batch['done']
         obs_pre = obs[:,0:self.hparams.seq_len, ...]
         obs_next = obs[:,1:,...]
         latent_obs = self.img2latent(obs_pre)
         # print(latent_obs.shape)
         next_latent_obs = self.img2latent(obs_next)
-        (pi, mu, sigma), (_,_) = self(latent_obs,act)
-        loss = self.mdn_loss_fn(next_latent_obs, mu, sigma, pi)
+        (pi, mu, sigma, prew, pdone), (_,_) = self(latent_obs,act)
+        loss = self.loss_function(next_latent_obs, mu, sigma, pi, prew, rew, pdone, done)
         self.log_dict(loss)
         return loss['loss']
 
@@ -114,12 +140,14 @@ class MDNRNN(pl.LightningModule):
         self, batch: Dict[str, torch.Tensor], batch_idx: int) -> Dict[str, Union[torch.Tensor,Sequence[wandb.Image]]]:
         obs = batch['obs']
         act = batch['act']
+        rew = batch['rew']
+        done = batch['done']
         obs_pre = obs[:,0:self.hparams.seq_len, ...]
         obs_next = obs[:,1:,...]
         latent_obs = self.img2latent(obs_pre)
         next_latent_obs = self.img2latent(obs_next)
-        (pi, mu, sigma), (_,_) = self(latent_obs,act)
-        loss = self.mdn_loss_fn(next_latent_obs, mu, sigma, pi)
+        (pi, mu, sigma, prew, pdone), (_,_) = self(latent_obs,act)
+        loss = self.loss_function(next_latent_obs, mu, sigma, pi, prew, rew, pdone, done)
         return {"loss_mdnrnn_val": loss['loss']}
 
     def validation_epoch_end(
