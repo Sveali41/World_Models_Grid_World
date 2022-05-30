@@ -19,7 +19,7 @@ class Decoder(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(1024, 128, 5, stride=2)
         self.deconv2 = nn.ConvTranspose2d(128, 64, 5, stride=2)
         self.deconv3 = nn.ConvTranspose2d(64, 32, 6, stride=2)
-        self.deconv4 = nn.ConvTranspose2d(32, img_channels, 6, stride=2)
+        self.deconv4 = nn.ConvTranspose2d(32, self.img_channels, 6, stride=2)
 
     def forward(self, x): # pylint: disable=arguments-differ
         x = F.relu(self.fc1(x))
@@ -40,8 +40,8 @@ class Encoder(nn.Module): # pylint: disable=too-many-instance-attributes
         self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
         self.conv3 = nn.Conv2d(64, 128, 4, stride=2)
         self.conv4 = nn.Conv2d(128, 256, 4, stride=2)
-        self.fc_mu = nn.Linear(2*2*256, latent_size)
-        self.fc_logsigma = nn.Linear(2*2*256, latent_size)
+        self.fc_mu = nn.Linear(2*2*256, self.latent_size)
+        self.fc_logsigma = nn.Linear(2*2*256, self.latent_size)
 
     def forward(self, x): 
         x = F.relu(self.conv1(x))
@@ -71,7 +71,7 @@ class VAE(pl.LightningModule):
         eps = torch.randn_like(sigma)
         z = eps.mul(sigma).add_(mu)
         x_recon = self.decoder(z)
-        return x_recon, mu, logsigma
+        return x_recon, mu, logsigma, z
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr, betas=(0.9, 0.999), eps=1e-6, weight_decay=self.hparams.wd)
@@ -103,7 +103,7 @@ class VAE(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         obs = batch['obs']
-        recon_batch, mu, logvar = self(obs)
+        recon_batch, mu, logvar,_ = self(obs)
         loss = self.loss_function(recon_batch, obs, mu, logvar)
         self.log_dict(loss)
         return loss['loss']
@@ -135,7 +135,7 @@ class VAE(pl.LightningModule):
     def validation_step(
         self, batch: Dict[str, torch.Tensor], batch_idx: int) -> Dict[str, Union[torch.Tensor,Sequence[wandb.Image]]]:
         obs = batch['obs']
-        recon_batch, mu, logvar = self(obs)
+        recon_batch, mu, logvar, _ = self(obs)
         loss = self.loss_function(recon_batch, obs, mu, logvar)
         images = self.get_image_examples(obs, recon_batch)
         return {"loss_vae_val": loss['loss'], "images": images}

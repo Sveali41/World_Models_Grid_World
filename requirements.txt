@@ -14,5 +14,7 @@ wandb
 setuptools==59.5.0
 pytorch-lightning==1.6.3
 gym-minigrid
+dvc
+cma#==1.1.7
 # package location
 --find-links https://download.pytorch.org/whl/torch_stable.html

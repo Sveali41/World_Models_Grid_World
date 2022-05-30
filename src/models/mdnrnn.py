@@ -40,9 +40,8 @@ class MDNRNN(pl.LightningModule):
         self.fc1 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size) # to compute pi
         self.fc2 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size) # to compute mu
         self.fc3 = nn.Linear(self.n_hidden, self.n_gaussians*self.z_size) # to compute sigma
-        #these are two classification problems (Must differentiate in case of different reward)
-        self.fc4 = nn.Linear(self.n_hidden, 3) # to estimate reward (-1, 0, +1)
-        self.fc5 = nn.Linear(self.n_hidden, 1) # to estimate terminate state (0, 1)
+        #this is a classification problems, to predict terminate state (0, 1)
+        self.fc4 = nn.Linear(self.n_hidden, 1)
     
     def get_mixture_coef(self, y):
         rollout_length = y.size(1)
@@ -54,14 +53,16 @@ class MDNRNN(pl.LightningModule):
         sigma = torch.exp(sigma) #to have positive values
         return pi, mu, sigma
     
-    def forward(self, latents, actions):
+    def forward(self, latents, actions, hidden = None):
         x = torch.cat([actions, latents], dim=-1)
         # Forward propagate LSTM
-        y, (h, c) = self.lstm(x)
+        if hidden == None:
+            y, (h, c) = self.lstm(x)
+        else:
+            y, (h, c) = self.lstm(x, hidden)
         pi, mu, sigma = self.get_mixture_coef(y)
-        rew = self.fc4(y) #it will be processed by the crossentropy loss
-        done = torch.sigmoid(self.fc5(y)) # done is a binary value, sigmoid is ideal here.
-        return (pi, mu, sigma, rew, done), (h, c)
+        done = torch.sigmoid(self.fc4(y)) # done is a binary value, sigmoid is ideal here.
+        return (pi, mu, sigma, done), (h, c)
 
     def mdn_loss_fn(self,y, mu, sigma, pi):
         # Actually, the loss is not lower bounded and the problem is actually ill-posed, 
@@ -82,18 +83,10 @@ class MDNRNN(pl.LightningModule):
         original = original.view(-1, original.shape[-1])
         return F.mse_loss(predict, original, reduction='mean')
 
-    def rew_loss(self, predict, original):
-        predict = predict.view(-1,predict.shape[-1])
-        original = original.view(-1)
-        # print(predict.shape)
-        # print(original.shape)
-        return F.cross_entropy(predict,original)
-
-    def loss_function(self, next_latent_obs, mu, sigma, pi, prew, rew, pdone, done):
+    def loss_function(self, next_latent_obs, mu, sigma, pi, pdone, done):
         MDNL = self.mdn_loss_fn(next_latent_obs, mu, sigma, pi)
         DONEL = self.done_loss(pdone, done)
-        REWL = self.rew_loss(prew, rew)
-        logger_d = {'loss':MDNL+REWL+DONEL,'mdn_loss': MDNL, 'rew_loss': REWL, 'done_loss':DONEL}
+        logger_d = {'loss':MDNL+DONEL,'mdn_loss': MDNL, 'done_loss':DONEL}
         return logger_d
     
     def configure_optimizers(self):
@@ -117,22 +110,21 @@ class MDNRNN(pl.LightningModule):
         original_shape = obs.shape
         obs = obs.reshape(-1,*original_shape[2:])
         with torch.no_grad():
-            _, mu, logsigma = self.vae(obs)
+            _, mu, logsigma, z = self.vae(obs)
             latent = (mu + logsigma.exp() * torch.randn_like(mu)).view(*original_shape[0:2], self.hparams.latent_size)
-        return latent
+        return z.view(*original_shape[0:2], self.hparams.latent_size)
 
     def training_step(self, batch, batch_idx):
         obs = batch['obs']
         act = batch['act']
-        rew = batch['rew']
         done = batch['done']
         obs_pre = obs[:,0:self.hparams.seq_len, ...]
         obs_next = obs[:,1:,...]
         latent_obs = self.img2latent(obs_pre)
         # print(latent_obs.shape)
         next_latent_obs = self.img2latent(obs_next)
-        (pi, mu, sigma, prew, pdone), (_,_) = self(latent_obs,act)
-        loss = self.loss_function(next_latent_obs, mu, sigma, pi, prew, rew, pdone, done)
+        (pi, mu, sigma, pdone), (_,_) = self(latent_obs,act)
+        loss = self.loss_function(next_latent_obs, mu, sigma, pi, pdone, done)
         self.log_dict(loss)
         return loss['loss']
 
@@ -140,14 +132,13 @@ class MDNRNN(pl.LightningModule):
         self, batch: Dict[str, torch.Tensor], batch_idx: int) -> Dict[str, Union[torch.Tensor,Sequence[wandb.Image]]]:
         obs = batch['obs']
         act = batch['act']
-        rew = batch['rew']
         done = batch['done']
         obs_pre = obs[:,0:self.hparams.seq_len, ...]
         obs_next = obs[:,1:,...]
         latent_obs = self.img2latent(obs_pre)
         next_latent_obs = self.img2latent(obs_next)
-        (pi, mu, sigma, prew, pdone), (_,_) = self(latent_obs,act)
-        loss = self.loss_function(next_latent_obs, mu, sigma, pi, prew, rew, pdone, done)
+        (pi, mu, sigma, pdone), (_,_) = self(latent_obs,act)
+        loss = self.loss_function(next_latent_obs, mu, sigma, pi, pdone, done)
         return {"loss_mdnrnn_val": loss['loss']}
 
     def validation_epoch_end(
@@ -156,3 +147,8 @@ class MDNRNN(pl.LightningModule):
         avg_loss = torch.stack([x["loss_mdnrnn_val"] for x in outputs]).mean()
         self.log_dict({"avg_val_loss_mdnrnn": avg_loss})
         return {"avg_val_loss_mdnrnn": avg_loss}
+    
+    def on_save_checkpoint(self,checkpoint):
+        # pop the backbone here using custom logic
+        t = checkpoint['state_dict']
+        checkpoint['state_dict'] =  {key: t[key] for key in t if not key.startswith('vae.')}

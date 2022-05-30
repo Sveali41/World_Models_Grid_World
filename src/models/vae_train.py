@@ -1,7 +1,7 @@
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from src.common.utils import PROJECT_ROOT,get_env
-from src.env.data.datamodule import WMRLDataModule
+from src.data.datamodule import WMRLDataModule
 from src.models.vae import VAE
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.wandb import WandbLogger

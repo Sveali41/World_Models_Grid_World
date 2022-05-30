@@ -7,8 +7,8 @@ vae:
   lr: 1e-3
   wd: 1e-5
   log_images: 24
-  data_dir: ${oc.env:TRAIN_DATASET_PATH}/gridworld.npz
-  pth_folder: ${oc.env:PTH_FOLDER}/vae.pth
+  data_dir: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz
+  pth_folder: ${oc.env:PTH_FOLDER}/vae.ckpt
   seq_len: 1 #sequence length for each dataset item
   n_epochs: 90 #number of training epochs
 
@@ -21,9 +21,25 @@ mdnrnn:
   n_gaussians: 5
   log_images: 24
   data_dir: ${vae.data_dir}
-  seq_len: 4 #sequence length for each dataset item
-  n_epochs: 100 # number of training epochs
+  seq_len: 10 #sequence length for each dataset item
+  n_epochs: 1 # number of training epochs
   lr: 1e-3
   wd: 1e-5
   num_layers: 3 #layers for lstm
-  pth_folder: ${oc.env:PTH_FOLDER}/mdnrnn.pth
+  pth_folder: ${oc.env:PTH_FOLDER}/mdnrnn.ckpt
+
+controller:
+  latent_size: ${vae.latent_size}
+  hidden_size: ${mdnrnn.hidden_size}
+  action_size: ${mdnrnn.action_size}
+  discrete_action_space: True
+  pth_folder: ${oc.env:PTH_FOLDER}/controller.ckpt
+  n_workers: 4
+  pop_size: 4
+  target_return: 20
+  n_samples: 4 # samples for each parameters to use during training time
+
+test_env:
+  visualize: False
+  time_limit: 150 #max number of steps for each rollout
+  env_name: MiniGrid-Dynamic-Obstacles-8x8-v0
