@@ -35,10 +35,10 @@ controller:
   discrete_action_space: True
   pth_folder: ${oc.env:PTH_FOLDER}/controller.ckpt
   n_workers: 4
-  pop_size: 100
-  target_return: 2
+  pop_size: 200
+  target_return: 0.7
   n_samples: 10 # samples for each parameters to use during training time
-  sigma: 10
+  sigma: 100
 
 test_env:
   visualize: False
