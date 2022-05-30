@@ -1,0 +1,4 @@
+outs:
+- md5: fbb9ffdfacbd1885b39a21ba959e70ed
+  size: 53394585
+  path: vae.ckpt

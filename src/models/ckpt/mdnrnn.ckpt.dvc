@@ -1,0 +1,4 @@
+outs:
+- md5: e9b0a6cc2f9cc4430615d4fa20458103
+  size: 13272996
+  path: mdnrnn.ckpt
