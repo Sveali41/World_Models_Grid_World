@@ -5,30 +5,32 @@ import hydra
 import numpy as np
 from src.common.utils import PROJECT_ROOT
 import gym
+import time
 from gym_minigrid.wrappers import *
 import random
 def run_env(cfg: DictConfig):
-   
-    env = gym.make("MiniGrid-Dynamic-Obstacles-8x8-v0") #'MiniGrid-Empty-8x8-v0'
+    env = gym.make(cfg.env.env_name) #'MiniGrid-Empty-8x8-v0'
+    env = StateBonus(env)
     env = RGBImgObsWrapper(env) # Get pixel observations
     env = ImgObsWrapper(env) # Get rid of the 'mission' field
-    # if (cfg.env.visualize): #set to false to hide the gui
-    #     env = env.render 
     obs_list, act_list, rew_list, done_list = [], [], [], []
-    episodes=0
+    episodes = 0
     env.reset()
     while episodes < cfg.collect.episodes:
-        act = random.randint(0, env.action_space.n - 1)
+        act = np.random.randint(1, env.action_space.n) #we restrict the number of actions to 2
         obs, reward, done, _ = env.step(act)
         act_list.append([act])
         obs_list.append([obs])
         rew_list.append([reward])
         done_list.append([done])
+        if (cfg.env.visualize): #set to false to hide the gui
+            env.render()
+            time.sleep(0.1)
         if done:
             episodes += 1
-            print(episodes)
+            if (episodes % 100) == 0:
+                print("episode", episodes)
             env.reset()
-        env.render('rgb_array')
     obs_np = np.concatenate(obs_list)
     act_np = np.concatenate(act_list)
     rew_np = np.concatenate(rew_list)
