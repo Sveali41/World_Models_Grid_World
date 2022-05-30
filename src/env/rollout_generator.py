@@ -73,7 +73,7 @@ class RolloutGenerator(object):
 
     def get_action_and_transition(self, obs, hidden):
         _, _, _, z = self.vae(obs)
-        action = self.controller.choose_an_action([z, hidden[0][0]])
+        action = self.controller.choose_an_action([z, hidden[0][0]]).unsqueeze(0)
         (_, _, _, done), next_hidden = self.mdnrnn(z.unsqueeze(0), action.to(self.device), hidden = hidden)
         return action.squeeze().cpu().numpy(), next_hidden, done.view(-1).detach().cpu().numpy()[0]
 
@@ -100,6 +100,8 @@ class RolloutGenerator(object):
                 time.sleep(0.1)
             cumulative += reward #- pdone
             if done or i > self.time_limit:
+                if i > self.time_limit:
+                    cumulative-=1
                 # I add a special reward that depends on the steps we survive 
                 return - cumulative#- i/(self.time_limit*10)
             i += 1

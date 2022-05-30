@@ -22,4 +22,4 @@ class CONTROLLER(pl.LightningModule):
             return continuous_action
         discrete_action = torch.ones_like(continuous_action)
         discrete_action[continuous_action<0]=2
-        return discrete_action.unsqueeze(0)
+        return discrete_action
