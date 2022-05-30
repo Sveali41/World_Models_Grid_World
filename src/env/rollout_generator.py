@@ -67,7 +67,7 @@ class RolloutGenerator(object):
         if exists(controller_pth):
             self.controller.load_state_dict(torch.load(controller_pth, map_location=self.device)['state_dict'])
         self.env = gym.make(hparams.test_env.env_name)
-        self.env = StateBonus(self.env)
+        # self.env = StateBonus(self.env)
         self.env = RGBImgObsWrapper(self.env) # Get pixel observations
         self.env = ImgObsWrapper(self.env) # Get rid of the 'mission' field
 
@@ -101,5 +101,5 @@ class RolloutGenerator(object):
             cumulative += reward #- pdone
             if done or i > self.time_limit:
                 # I add a special reward that depends on the steps we survive 
-                return -cumulative#- i/(self.time_limit*10)
+                return - cumulative#- i/(self.time_limit*10)
             i += 1
