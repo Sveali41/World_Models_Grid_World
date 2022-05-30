@@ -15,17 +15,11 @@ class CONTROLLER(pl.LightningModule):
         # print(cat_in.shape)
         return torch.tanh(self.fc(cat_in))
     def choose_an_action(self, inputs):
-        # there are 3 actions: turn right, turn left and go forward. This space has been divided
-        # into a continuous action space between -1.0 to 1.0, and divided this range into thirds
-        continuous_action = self(inputs).view(-1)
+        # there are 2 actions: turn right and go forward. This space has been divided
+        # into a continuous action space between -1.0 to 1.0, and divided this range into half
+        continuous_action = self(inputs)
         if not self.hparams.discrete_action_space:
             return continuous_action
-        interval1 = -1+0.666666
-        interval2 = interval1+0.666666
-        if continuous_action <= interval1:
-            action = 0
-        elif continuous_action <= interval2:
-            action = 1
-        else:
-            action = 2
-        return torch.tensor([action]).unsqueeze(0).unsqueeze(1)
+        discrete_action = torch.ones_like(continuous_action)
+        discrete_action[continuous_action<0]=2
+        return discrete_action.unsqueeze(0)

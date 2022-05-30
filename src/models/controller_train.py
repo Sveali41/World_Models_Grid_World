@@ -61,7 +61,7 @@ def slave_routine(p_queue, r_queue, e_queue, p_index,tmp_dir,hparams):
 ################################################################################
 #                           Evaluation                                         #
 ################################################################################
-def evaluate(solutions, results, p_queue, r_queue, rollouts=100):
+def evaluate(solutions, results, p_queue, r_queue, rollouts=200):
     # https://blog.otoro.net/2017/10/29/visual-evolution-strategies/
     """ Give current controller evaluation.
     Evaluation is minus the cumulated reward averaged over rollout runs.
@@ -126,9 +126,11 @@ def train(cfg: DictConfig):
     # initial standard deviation. The problem variables should have been scaled,
     # such that a single standard deviation on all variables is useful and the 
     # optimum is expected to lie within about x0 +- 3*sigma0.
-    sigma = 0.1 
-    es = cma.CMAEvolutionStrategy(flatten_parameters(parameters), sigma, {'popsize': pop_size})
+    sigma = hparams.controller.sigma
+    #https://cma-es.github.io/apidocs-pycma/cma.evolution_strategy.CMAEvolutionStrategy.html
+    es = cma.evolution_strategy.CMAEvolutionStrategy(flatten_parameters(parameters), sigma, {'popsize': pop_size})
     # http://www.cmap.polytechnique.fr/~nikolaus.hansen/html-pythoncma/
+    # es.logger.disp_header()
     epoch = 0
     log_step = 3
     while not es.stop():
@@ -137,7 +139,10 @@ def train(cfg: DictConfig):
             break
 
         r_list = [0] * pop_size  # result list
-        solutions = es.ask()
+        #optimizing the Rosenbrock function in 10-D with initial solution 0.1 and initial step-size 0.5.
+        # es.optimize(cma.ff.rosen)
+        solutions = es.ask_geno()
+        # https://cma-es.github.io/apidocs-pycma/cma.evolution_strategy.CMAEvolutionStrategy.html
         # push parameters to queue
         for s_id, s in enumerate(solutions):
             for _ in range(n_samples):
@@ -152,11 +157,13 @@ def train(cfg: DictConfig):
 
         es.tell(solutions, r_list)
         es.disp()
+        # best_solution = es.result
+        # print(best_solution)
 
         # evaluation and saving
         if epoch % log_step == log_step - 1:
             best_params, best, std_best = evaluate(solutions, r_list, p_queue, r_queue)
-            print("Current evaluation: {}".format(best))
+            print("Current evaluation: {} vs current best {}".format(best, cur_best))
             if not cur_best or cur_best > best:
                 cur_best = best
                 print("Saving new best with value {}+-{}...".format(-cur_best, std_best))
