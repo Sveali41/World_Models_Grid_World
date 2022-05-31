@@ -1,9 +1,3 @@
-"""
-Training a linear controller on latent + recurrent state
-with CMAES.
-This is a bit complex. num_workers slave threads are launched
-to process a queue filled with parameters to be evaluated.
-"""
 import sys
 from os.path import join, exists
 from os import mkdir, unlink, listdir, getpid
@@ -118,7 +112,7 @@ def train(cfg: DictConfig):
     print("Attempting to load previous best...")
     if exists(ctrl_file):
         # Map tensors from GPU 0 to cpu
-        state = torch.load(ctrl_file, map_location={'cuda:0': 'cpu'})
+        state = torch.load(ctrl_file, map_location={'cuda:0': 'cpu'}) # we only want the parameters
         cur_best = - state['reward']
         controller.load_state_dict(state['state_dict'])
         print("Previous best was {}...".format(-cur_best))
@@ -133,7 +127,8 @@ def train(cfg: DictConfig):
     # es.logger.disp_header()
     epoch = 0
     log_step = 3
-    while not es.stop():
+    max_epoch = hparams.controller.n_epochs
+    while not es.stop() and epoch < max_epoch:
         if cur_best is not None and - cur_best > target_return:
             print("Already better than target, breaking...")
             break
@@ -156,9 +151,8 @@ def train(cfg: DictConfig):
             r_list[r_s_id] += r / n_samples
 
         es.tell(solutions, r_list)
+        es.logger.add()
         es.disp()
-        # best_solution = es.result
-        # print(best_solution)
 
         # evaluation and saving
         if epoch % log_step == log_step - 1:
@@ -177,9 +171,12 @@ def train(cfg: DictConfig):
                 print("Terminating controller training with value {}...".format(best))
                 break
         epoch += 1
-
-    es.result_pretty()
     e_queue.put('EOP')
+    es.result_pretty()
+    es.logger.plot(fontsize=5)
+    #to log the evolution
+    print("Saving results...")
+    cma.s.figsave(str(PROJECT_ROOT)+'/src/data/result_of_controller_train.svg')
 
 if __name__ == "__main__":
     train()

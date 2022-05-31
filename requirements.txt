@@ -1,5 +1,3 @@
-procgen==0.10.7
-gym3==0.3.3
 hydra-core==1.2.0
 python-dotenv==0.20.0
 matplotlib==3.5.2
@@ -8,13 +6,11 @@ torchvision==0.11.0+cu111
 tqdm==4.63.0
 numpy==1.21.5
 gym[box2d]
-gym[atari]
-gym[accept-rom-license]
 wandb
 setuptools==59.5.0
 pytorch-lightning==1.6.3
 gym-minigrid
 dvc
-cma#==1.1.7
-# package location
+cma
+
 --find-links https://download.pytorch.org/whl/torch_stable.html

@@ -98,7 +98,7 @@ class VAE(pl.LightningModule):
         #KLD = -0.5 * torch.sum(1 + logsigma - mu.pow(2) - logsigma.exp())
         # original
         KLD = -0.5 * torch.sum(1 + 2 * logsigma - mu.pow(2) - (2 * logsigma).exp())
-        beta = 0.0001
+        beta = self.hparams.beta
         return {"loss": BCE + beta*KLD, "BCE": BCE, "KLD": KLD}
 
     def training_step(self, batch, batch_idx):

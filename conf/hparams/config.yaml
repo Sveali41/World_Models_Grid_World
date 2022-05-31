@@ -9,8 +9,9 @@ vae:
   log_images: 24
   data_dir: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz
   pth_folder: ${oc.env:PTH_FOLDER}/vae.ckpt
-  seq_len: 1 #sequence length for each dataset item
-  n_epochs: 90 #number of training epochs
+  seq_len: 1 # sequence length for each dataset item
+  beta: 0.0001 # to balance mse and KLD
+  n_epochs: 90 # number of training epochs
 
 mdnrnn:
   latent_size: ${vae.latent_size} #latent size, the same we use for vae
@@ -39,8 +40,11 @@ controller:
   target_return: 0.7
   n_samples: 10 # samples for each parameters to use during training time
   sigma: 100
+  n_epochs: 10000
 
 test_env:
   visualize: False
   time_limit: 600 #max number of steps for each rollout
   env_name: MiniGrid-Dynamic-Obstacles-8x8-v0 #MiniGrid-Empty-8x8-v0 #MiniGrid-Dynamic-Obstacles-8x8-v0
+
+
