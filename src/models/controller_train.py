@@ -176,7 +176,7 @@ def train(cfg: DictConfig):
     es.logger.plot(fontsize=5)
     #to log the evolution
     print("Saving results...")
-    cma.s.figsave(str(PROJECT_ROOT)+'/src/data/result_of_controller_train.svg')
+    cma.s.figsave(log_dir+'/result_of_controller_train.svg')
 
 if __name__ == "__main__":
     train()
