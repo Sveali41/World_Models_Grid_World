@@ -1,5 +1,3 @@
-import gym3
-from procgen import ProcgenGym3Env
 from omegaconf import DictConfig, OmegaConf
 import hydra
 import numpy as np

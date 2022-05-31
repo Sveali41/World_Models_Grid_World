@@ -1,13 +1,6 @@
-env: #these settings are mostly for procgames
+env:
   env_name: MiniGrid-Dynamic-Obstacles-8x8-v0 # Name of environment, or comma-separate list of environment names to instantiate as each env in the VecEnv.
-  num_levels: 0 # The number of unique levels that can be generated. Set to 0 to use unlimited levels.
-  start_level: 0 # The lowest seed that will be used to generated levels. 'start_level' and 'num_levels' fully specify the set of possible levels.
-  distribution_mode: easy # All games support "easy" and "hard", while other options are game-specific. The default is "hard". Switching to "easy" will reduce the number of timesteps required to solve each game and is useful for testing or when working with limited compute resources.
-  visualize: False
-  use_backgrounds: False
+  visualize: False # to choose whether your want to see the env during interaction or not
 collect:
-  steps: 500000
-  episodes: 10000
-  data_train: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz #folder where to save the rollouts
-  min_step: 10
-  min_reward: 10
+  episodes: 10000 # number of episodes to start 
+  data_train: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz # folder where to save the rollouts

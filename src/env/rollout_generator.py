@@ -82,8 +82,6 @@ class RolloutGenerator(object):
         if params is not None:
             load_parameters(params, self.controller)
         obs = self.env.reset()
-        # # This first render is required #! not sure, in case attivate it
-        # self.env.render()
         hidden = [torch.zeros(self.hparams.mdnrnn.num_layers, 1, self.hparams.mdnrnn.hidden_size).to(self.device) for _ in range(2)] # 1 always to have "fake batch dim"
         transform = transforms.Compose([
                     transforms.ToPILImage(),
@@ -92,12 +90,12 @@ class RolloutGenerator(object):
         cumulative = 0
         i = 0
         while True:
-            obs = transform(obs).unsqueeze(0).to(self.device) # we need to make it "batch" to work with pytorch models
-            action, hidden, pdone = self.get_action_and_transition(obs, hidden)
-            obs, reward, done, _ = self.env.step(action)
             if self.hparams.test_env.visualize:
                 self.env.render()
                 time.sleep(0.1)
+            obs = transform(obs).unsqueeze(0).to(self.device) # we need to make it "batch" to work with pytorch models
+            action, hidden, pdone = self.get_action_and_transition(obs, hidden)
+            obs, reward, done, _ = self.env.step(action)
             cumulative += reward #- pdone
             if done or i > self.time_limit:
                 if i > self.time_limit:
