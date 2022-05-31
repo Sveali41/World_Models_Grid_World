@@ -3,16 +3,23 @@ from os.path import join, exists
 from os import mkdir, unlink, listdir, getpid
 from time import sleep
 from torch.multiprocessing import Process, Queue
-import torch
 import cma
 from src.models.controller import CONTROLLER
 from tqdm import tqdm
-import numpy as np
 from src.env.rollout_generator import RolloutGenerator, load_parameters, flatten_parameters
 from src.common.utils import PROJECT_ROOT, get_env
 import hydra
 from omegaconf import DictConfig, OmegaConf
-
+# reproducibility stuff
+import numpy as np
+import random
+import torch
+np.random.seed(0)
+random.seed(0)
+torch.cuda.manual_seed(0)
+torch.manual_seed(0)
+torch.backends.cudnn.deterministic = True  # Note that this Deterministic mode can have a performance impact
+torch.backends.cudnn.benchmark = False
 ################################################################################
 #                           Thread routines                                    #
 ################################################################################

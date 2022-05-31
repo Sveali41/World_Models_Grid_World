@@ -8,6 +8,17 @@ from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
 import wandb
+# reproducibility stuff
+import numpy as np
+import random
+import torch
+np.random.seed(0)
+random.seed(0)
+torch.cuda.manual_seed(0)
+torch.manual_seed(0)
+torch.backends.cudnn.deterministic = True  # Note that this Deterministic mode can have a performance impact
+torch.backends.cudnn.benchmark = False
+
 wandb.require("service")
 @hydra.main(version_base=None, config_path=PROJECT_ROOT / "conf/hparams", config_name="config")
 def train(cfg: DictConfig):
