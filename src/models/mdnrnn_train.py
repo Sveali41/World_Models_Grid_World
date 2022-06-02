@@ -18,6 +18,7 @@ torch.cuda.manual_seed(0)
 torch.manual_seed(0)
 torch.backends.cudnn.deterministic = True  # Note that this Deterministic mode can have a performance impact
 torch.backends.cudnn.benchmark = False
+_ = pl.seed_everything(0)
 
 wandb.require("service")
 @hydra.main(version_base=None, config_path=PROJECT_ROOT / "conf/hparams", config_name="config")

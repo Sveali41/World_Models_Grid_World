@@ -66,7 +66,8 @@ class RolloutGenerator(object):
         self.controller = CONTROLLER(hparams.controller).to(self.device)
         if exists(controller_pth):
             self.controller.load_state_dict(torch.load(controller_pth, map_location=self.device)['state_dict'])
-        self.env = gym.make(hparams.test_env.env_name)
+        self.env = gym.make(hparams.test_env.env_name)#, n_obstacles=2 to change obstacles in the obstacles world
+        #self.env.env.width, self.env.env.height = 8,8 # to work with different size env
         # self.env = StateBonus(self.env)
         self.env = RGBImgObsWrapper(self.env) # Get pixel observations
         self.env = ImgObsWrapper(self.env) # Get rid of the 'mission' field
