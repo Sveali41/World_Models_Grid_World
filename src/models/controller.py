@@ -21,5 +21,9 @@ class CONTROLLER(pl.LightningModule):
         if not self.hparams.discrete_action_space:
             return continuous_action
         discrete_action = torch.ones_like(continuous_action)
+        n_actions = self.hparams.n_actions
+        # for i in range(1,n_actions):
+
+
         discrete_action[continuous_action<0]=2
         return discrete_action
