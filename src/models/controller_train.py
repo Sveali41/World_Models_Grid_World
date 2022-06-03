@@ -130,8 +130,6 @@ def train(cfg: DictConfig):
     sigma = hparams.controller.sigma
     #https://cma-es.github.io/apidocs-pycma/cma.evolution_strategy.CMAEvolutionStrategy.html
     es = cma.evolution_strategy.CMAEvolutionStrategy(flatten_parameters(parameters), sigma, {'popsize': pop_size})
-    # http://www.cmap.polytechnique.fr/~nikolaus.hansen/html-pythoncma/
-    # es.logger.disp_header()
     epoch = 0
     log_step = 3
     max_epoch = hparams.controller.n_epochs
@@ -180,7 +178,7 @@ def train(cfg: DictConfig):
         epoch += 1
     e_queue.put('EOP')
     es.result_pretty()
-    es.logger.plot(fontsize=5)
+    es.logger.plot(fontsize=3)
     #to log the evolution
     print("Saving results...")
     cma.s.figsave(log_dir+'/result_of_controller_train.svg')
