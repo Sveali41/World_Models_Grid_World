@@ -1,14 +1,89 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{13}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Anderson(2008)]{anderson2008end}
-Anderson, C.
-\newblock The end of theory: The data deluge makes the scientific method
-  obsolete.
-\newblock \emph{Wired magazine}, 16\penalty0 (7):\penalty0 16--07, 2008.
+\bibitem[Atkeson \& Santamaria(1997)Atkeson and
+  Santamaria]{Atkeson97acomparison}
+Atkeson, C.~G. and Santamaria, J.~C.
+\newblock A comparison of direct and model-based reinforcement learning.
+\newblock In \emph{IN INTERNATIONAL CONFERENCE ON ROBOTICS AND AUTOMATION},
+  pp.\  3557--3564. IEEE Press, 1997.
+
+\bibitem[Bishop(1994)]{mdn}
+Bishop, C.
+\newblock Mixture density networks.
+\newblock Workingpaper, Aston University, 1994.
+
+\bibitem[Chevalier-Boisvert et~al.(2018)Chevalier-Boisvert, Willems, and
+  Pal]{gym_minigrid}
+Chevalier-Boisvert, M., Willems, L., and Pal, S.
+\newblock Minimalistic gridworld environment for openai gym.
+\newblock \url{https://github.com/maximecb/gym-minigrid}, 2018.
+
+\bibitem[Ha \& Schmidhuber(2018)Ha and Schmidhuber]{wm}
+Ha, D. and Schmidhuber, J.
+\newblock World models.
+\newblock 2018.
+\newblock \doi{10.5281/ZENODO.1207631}.
+\newblock URL \url{https://zenodo.org/record/1207631}.
+
+\bibitem[Hafner et~al.(2018)Hafner, Lillicrap, Fischer, Villegas, Ha, Lee, and
+  Davidson]{planet}
+Hafner, D., Lillicrap, T., Fischer, I., Villegas, R., Ha, D., Lee, H., and
+  Davidson, J.
+\newblock Learning latent dynamics for planning from pixels, 2018.
+\newblock URL \url{https://arxiv.org/abs/1811.04551}.
+
+\bibitem[Hafner et~al.(2019)Hafner, Lillicrap, Ba, and Norouzi]{dreamerv1}
+Hafner, D., Lillicrap, T., Ba, J., and Norouzi, M.
+\newblock Dream to control: Learning behaviors by latent imagination, 2019.
+\newblock URL \url{https://arxiv.org/abs/1912.01603}.
+
+\bibitem[Hafner et~al.(2021)Hafner, Lillicrap, Norouzi, and Ba]{dreamerv2}
+Hafner, D., Lillicrap, T., Norouzi, M., and Ba, J.
+\newblock Mastering atari with discrete world models, 2021.
+\newblock URL \url{https://arxiv.org/abs/2010.02193}.
+
+\bibitem[Hansen(2016)]{cmaes}
+Hansen, N.
+\newblock The cma evolution strategy: A tutorial, 2016.
+\newblock URL \url{https://arxiv.org/abs/1604.00772}.
+
+\bibitem[Kaiser et~al.(2019)Kaiser, Babaeizadeh, Milos, Osinski, Campbell,
+  Czechowski, Erhan, Finn, Kozakowski, Levine, Mohiuddin, Sepassi, Tucker, and
+  Michalewski]{simple}
+Kaiser, L., Babaeizadeh, M., Milos, P., Osinski, B., Campbell, R.~H.,
+  Czechowski, K., Erhan, D., Finn, C., Kozakowski, P., Levine, S., Mohiuddin,
+  A., Sepassi, R., Tucker, G., and Michalewski, H.
+\newblock Model-based reinforcement learning for atari, 2019.
+\newblock URL \url{https://arxiv.org/abs/1903.00374}.
+
+\bibitem[Moerland et~al.(2020)Moerland, Broekens, Plaat, and Jonker]{mb_survey}
+Moerland, T.~M., Broekens, J., Plaat, A., and Jonker, C.~M.
+\newblock Model-based reinforcement learning: A survey, 2020.
+\newblock URL \url{https://arxiv.org/abs/2006.16712}.
+
+\bibitem[Quian et~al.(2005)Quian, Reddy, Kreiman, Koch, and
+  Fried]{brain_article}
+Quian, R., Reddy, L., Kreiman, G., Koch, C., and Fried, I.
+\newblock Invariant visual representation by single neurons in the human brain.
+\newblock \emph{Nature}, 435:\penalty0 1102--7, 07 2005.
+\newblock \doi{10.1038/nature03687}.
+
+\bibitem[Staudemeyer \& Morris(2019)Staudemeyer and Morris]{lstm}
+Staudemeyer, R.~C. and Morris, E.~R.
+\newblock Understanding lstm -- a tutorial into long short-term memory
+  recurrent neural networks, 2019.
+\newblock URL \url{https://arxiv.org/abs/1909.09586}.
+
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez,
+  Kaiser, and Polosukhin]{transformers}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.~N.,
+  Kaiser, L., and Polosukhin, I.
+\newblock Attention is all you need, 2017.
+\newblock URL \url{https://arxiv.org/abs/1706.03762}.
 
 \end{thebibliography}

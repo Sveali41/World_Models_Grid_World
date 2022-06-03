@@ -20,6 +20,7 @@ def main(cfg: DictConfig):
         count_rewards.update([rew])
         cumulative_reward += rew
     print("Reward after {} rollouts: {}".format(n_rollouts, cumulative_reward))
+    print("Avg Reward {}".format(cumulative_reward/n_rollouts))
 
     plt.figure(figsize=(10,10))
     _ = plt.bar(count_rewards.keys(),count_rewards.values()) 
