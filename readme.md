@@ -29,7 +29,7 @@ python3 src/models/vae_train.py
 ```sh
 dvc pull
 ```
-- now make sure to have the visualize option set to true in conf/hparams/config.yaml and enjoy watching the agent solving the game... or at least trying
+- now enjoy watching the agent solving the game... or at least trying
 ```sh
-python3 src/env/play.py
+python3 src/env/play.py test_env.visualize=True
 ```
