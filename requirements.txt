@@ -4,7 +4,7 @@ matplotlib==3.5.2
 torch==1.10.0+cu111
 torchvision==0.11.0+cu111
 tqdm==4.63.0
-numpy==1.21.5
+numpy==1.22.0
 gym[box2d]
 wandb
 setuptools==59.5.0
