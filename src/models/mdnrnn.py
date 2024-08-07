@@ -7,6 +7,8 @@ from torch import optim
 from torch.distributions.normal import Normal
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import pytorch_lightning as pl
+import sys
+sys.path.append('/home/siyao/project/rlPractice/dlai_project')
 from src.common.utils import PROJECT_ROOT
 from src.models.vae import VAE
 import numpy as np

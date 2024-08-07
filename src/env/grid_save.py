@@ -1,14 +1,17 @@
 from omegaconf import DictConfig, OmegaConf
 import hydra
 import numpy as np
+import sys
+sys.path.append('/home/siyao/project/rlPractice/dlai_project')
 from src.common.utils import PROJECT_ROOT
 import gym
 import time
-from gym_minigrid.wrappers import *
+from minigrid.wrappers import *
 import random
+
 def run_env(cfg: DictConfig):
     env = gym.make(cfg.env.env_name) #'MiniGrid-Empty-8x8-v0'
-    env = StateBonus(env)
+    # env = StateBonus(env)
     env = RGBImgObsWrapper(env) # Get pixel observations
     env = ImgObsWrapper(env) # Get rid of the 'mission' field
     obs_list, act_list, rew_list, done_list = [], [], [], []
@@ -16,7 +19,7 @@ def run_env(cfg: DictConfig):
     env.reset()
     while episodes < cfg.collect.episodes:
         act = np.random.randint(1, env.action_space.n) #we restrict the number of actions to 2
-        obs, reward, done, _ = env.step(act)
+        obs, reward, done, _, _ = env.step(act)
         act_list.append([act])
         obs_list.append([obs])
         rew_list.append([reward])

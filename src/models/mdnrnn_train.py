@@ -1,5 +1,7 @@
 import hydra
 from omegaconf import DictConfig, OmegaConf
+import sys
+sys.path.append('/home/siyao/project/rlPractice/dlai_project')
 from src.common.utils import PROJECT_ROOT,get_env
 from src.data.datamodule import WMRLDataModule
 from src.models.mdnrnn import MDNRNN
@@ -20,7 +22,7 @@ torch.backends.cudnn.deterministic = True  # Note that this Deterministic mode c
 torch.backends.cudnn.benchmark = False
 _ = pl.seed_everything(0)
 
-wandb.require("service")
+wandb.require("core")
 @hydra.main(version_base=None, config_path=PROJECT_ROOT / "conf/hparams", config_name="config")
 def train(cfg: DictConfig):
     hparams = cfg
@@ -44,9 +46,9 @@ def train(cfg: DictConfig):
                             verbose = True
                         )
     trainer = pl.Trainer(logger=wandb_logger,
-                        max_epochs=hparams.mdnrnn.n_epochs, 
-                        gpus=1,
-                        callbacks=[early_stop_callback, checkpoint_callback])   
+                    max_epochs=hparams.mdnrnn.n_epochs, 
+                    gpus=1,
+                    callbacks=[early_stop_callback, checkpoint_callback])     
     # Start the training
     trainer.fit(mdnrnn,dataloader)
     # Log the trained model

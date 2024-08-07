@@ -4,9 +4,10 @@ from torchvision import transforms
 from src.common.utils import get_env
 from typing import Tuple, List, Any, Dict, Optional
 import os.path
-import src.env.run_env_save as env_run_save
+# import src.env.run_env_save as env_run_save
 import numpy as np
 import torch
+import multiprocessing
 
 class WMRLDataset(Dataset):
     def __init__(self,loaded ,hparams):
@@ -57,6 +58,9 @@ class WMRLDataModule(pl.LightningDataModule):
         
     def setup(self, stage: Optional[str] = None):
         loaded = np.load(self.data_dir)
+        # with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        # # Map the load_file function to the list of files
+        #     loaded = pool.map(np.load(self.data_dir))
         data = WMRLDataset(loaded,self.hparams)
         split_size=int(len(data)*9/10)
         self.data_train, self.data_test = torch.utils.data.random_split(data, \

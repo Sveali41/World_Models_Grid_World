@@ -1,4 +1,6 @@
 from itertools import count
+import sys
+sys.path.append('/home/siyao/project/rlPractice/dlai_project')
 from src.env.rollout_generator import RolloutGenerator
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -7,7 +9,7 @@ import torch
 from collections import Counter
 import matplotlib.pyplot as plt
 
-@hydra.main(version_base=None, config_path=PROJECT_ROOT / "conf/hparams", config_name="config")
+@hydra.main(version_base=None, config_path="/home/siyao/project/rlPractice/dlai_project/conf/hparams", config_name="config")
 def main(cfg: DictConfig):
     # cfg.test_env.visualize = True
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

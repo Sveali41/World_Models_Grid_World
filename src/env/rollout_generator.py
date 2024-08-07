@@ -5,7 +5,7 @@ from src.models.controller import CONTROLLER
 import torch
 from torchvision import transforms
 import gym
-from gym_minigrid.wrappers import *
+from minigrid.wrappers import *
 from os.path import exists
 import time
 #taken from the original implementation 
@@ -29,7 +29,14 @@ def unflatten_parameters(params, example, device):
 
     :returns: unflattened parameters
     """
-    params = torch.Tensor(params).to(device)
+    # params = torch.Tensor(params).to(device)
+    if isinstance(params, np.ndarray):
+        params = torch.tensor(params, dtype=torch.float32).to(device)
+    elif isinstance(params, torch.Tensor):
+        params = params.to(device, dtype=torch.float32)
+    else:
+        raise TypeError("params must be a NumPy array or a PyTorch tensor")
+    
     idx = 0
     unflattened = []
     for e_p in example:
@@ -82,7 +89,7 @@ class RolloutGenerator(object):
         # copy params into the controller
         if params is not None:
             load_parameters(params, self.controller)
-        obs = self.env.reset()
+        obs = self.env.reset()[0]
         hidden = [torch.zeros(self.hparams.mdnrnn.num_layers, 1, self.hparams.mdnrnn.hidden_size).to(self.device) for _ in range(2)] # 1 always to have "fake batch dim"
         transform = transforms.Compose([
                     transforms.ToPILImage(),
@@ -96,7 +103,8 @@ class RolloutGenerator(object):
                 time.sleep(0.1)
             obs = transform(obs).unsqueeze(0).to(self.device) # we need to make it "batch" to work with pytorch models
             action, hidden, pdone = self.get_action_and_transition(obs, hidden)
-            obs, reward, done, _ = self.env.step(action)
+            obs, reward, done, _, _ = self.env.step(action)
+            # print(reward)
             cumulative += reward #- pdone
             if done or i > self.time_limit:
                 if i > self.time_limit:

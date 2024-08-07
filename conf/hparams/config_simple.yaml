@@ -7,10 +7,10 @@ vae:
   lr: 1e-3
   wd: 1e-5
   log_images: 24
-  data_dir: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz
-  pth_folder: ${oc.env:PTH_FOLDER}/vae.ckpt
+  data_dir: /home/siyao/project/rlPractice/dlai_project/src/data/train/gridworld_full.npz 
+  pth_folder: /home/siyao/project/rlPractice/dlai_project/src/data/models/ckpt/vae.ckpt
   seq_len: 1 #sequence length for each dataset item
-  n_epochs: 90 #number of training epochs
+  n_epochs: 90 #number of training epochs 90
 
 mdnrnn:
   latent_size: ${vae.latent_size} #latent size, the same we use for vae
@@ -26,14 +26,14 @@ mdnrnn:
   lr: 1e-3
   wd: 1e-5
   num_layers: 2 #layers for lstm
-  pth_folder: ${oc.env:PTH_FOLDER}/mdnrnn.ckpt
+  pth_folder: /home/siyao/project/rlPractice/dlai_project/src/data/models/ckpt/mdnrnn.ckpt
 
 controller:
   latent_size: ${vae.latent_size}
   hidden_size: ${mdnrnn.hidden_size}
   action_size: ${mdnrnn.action_size}
   discrete_action_space: True
-  pth_folder: ${oc.env:PTH_FOLDER}/controller.ckpt
+  pth_folder: /home/siyao/project/rlPractice/dlai_project/src/data/models/ckpt/controller.ckpt
   n_workers: 4
   pop_size: 10
   target_return: 0.9
