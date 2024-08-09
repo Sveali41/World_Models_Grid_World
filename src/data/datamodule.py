@@ -8,12 +8,16 @@ import os.path
 import numpy as np
 import torch
 import multiprocessing
+import time
+from func_timeout import func_set_timeout
 
 class WMRLDataset(Dataset):
+    @func_set_timeout(100)
     def __init__(self,loaded ,hparams):
         self.hparams = hparams
         self.data = self.make_data(loaded)
-        
+
+    @func_set_timeout(100)
     def make_data(self,loaded):
         obs = loaded['a']
         act = loaded['b']

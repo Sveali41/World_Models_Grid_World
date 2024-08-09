@@ -104,11 +104,14 @@ class RolloutGenerator(object):
             obs = transform(obs).unsqueeze(0).to(self.device) # we need to make it "batch" to work with pytorch models
             action, hidden, pdone = self.get_action_and_transition(obs, hidden)
             obs, reward, done, _, _ = self.env.step(action)
-            # print(reward)
+            if reward != 0:
+                print(reward)
+                print(i)
             cumulative += reward #- pdone
             if done or i > self.time_limit:
-                if i > self.time_limit:
-                    cumulative-=1
+                if i > self.time_limit and not done:
+                    # cumulative-=1 
+                    cumulative = 0
                 # I add a special reward that depends on the steps we survive 
                 return - cumulative#- i/(self.time_limit*10)
             i += 1

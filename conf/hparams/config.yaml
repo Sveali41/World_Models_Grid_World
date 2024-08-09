@@ -9,6 +9,8 @@ vae:
   log_images: 24
   data_dir: ${oc.env:TRAIN_DATASET_PATH}/gridworld_full.npz
   pth_folder: ${oc.env:PTH_FOLDER}/vae.ckpt
+
+  
   seq_len: 1 # sequence length for each dataset item
   beta: 0.01 # to balance mse and KLD
   n_epochs: 90 # number of training epochs
@@ -23,7 +25,7 @@ mdnrnn:
   n_gaussians: 5
   log_images: 24
   data_dir: ${vae.data_dir}
-  seq_len: 5 # sequence length for each dataset item; 20 requires 64gb ram with standard settings
+  seq_len: 4 # sequence length for each dataset item; 20 requires 64gb ram with standard settings
   n_epochs: 100 # number of training epochs
   lr: 1e-3
   wd: 1e-5
@@ -47,7 +49,7 @@ controller:
   
 test_env:
   visualize: False
-  time_limit: 10 #max number of steps for each rollout 600
+  time_limit: 256 #max number of steps for each rollout 600
   env_name: MiniGrid-Empty-8x8-v0 #MiniGrid-Dynamic-Obstacles-8x8-v0 #MiniGrid-Empty-5x5-v0 #MiniGrid-Empty-8x8-v0 #MiniGrid-Empty-Random-6x6-v0 
   n_rollouts: 1000
 

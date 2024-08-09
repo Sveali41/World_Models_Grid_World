@@ -15,7 +15,6 @@ import numpy as np
 import random
 import torch
 
-# Reproducibility
 np.random.seed(0)
 random.seed(0)
 torch.cuda.manual_seed(0)
@@ -36,9 +35,13 @@ def handle_task(p_index, p_queue, r_queue, r_gen):
         # Clear CUDA cache
         torch.cuda.empty_cache()
 
-def slave_routine(p_queue, r_queue, e_queue, p_index, hparams):
+def slave_routine(p_queue, r_queue, e_queue, p_index, tmp_dir, hparams):
     gpu = p_index % torch.cuda.device_count()
     device = torch.device(f'cuda:{gpu}' if torch.cuda.is_available() else 'cpu')
+
+    # redirect streams
+    sys.stdout = open(join(tmp_dir, str(getpid()) + '.out'), 'a')
+    sys.stderr = open(join(tmp_dir, str(getpid()) + '.err'), 'a')
 
     with torch.no_grad():
         r_gen = RolloutGenerator(hparams, device)
@@ -91,7 +94,7 @@ def train(cfg: DictConfig):
 
     processes = []
     for p_index in range(num_workers):
-        p = Process(target=slave_routine, args=(p_queue, r_queue, e_queue, p_index, hparams))
+        p = Process(target=slave_routine, args=(p_queue, r_queue, e_queue, p_index, tmp_dir, hparams))
         p.start()
         processes.append(p)
 
@@ -106,7 +109,11 @@ def train(cfg: DictConfig):
         print("Previous best was {}...".format(-cur_best))
     parameters = controller.parameters()
     sigma = hparams.controller.sigma
-    es = cma.evolution_strategy.CMAEvolutionStrategy(flatten_parameters(parameters), sigma, {'popsize': pop_size})
+    es = cma.evolution_strategy.CMAEvolutionStrategy(flatten_parameters(parameters), sigma, 
+                                                     {'popsize': pop_size, 
+                                                    'tolfun': 1e-6,
+                                                    'tolx': 1e-6,
+                                                     })
     epoch = 0
     log_step = 3
     max_epoch = hparams.controller.n_epochs
@@ -121,7 +128,7 @@ def train(cfg: DictConfig):
         for s_id, s in enumerate(solutions):
             for _ in range(n_samples):
                 p_queue.put((s_id, s))
-                print(f"main generate s_id: {s_id}")
+                # print(f"main generate s_id: {s_id}")
 
         processed_tasks = set()
         for _ in range(pop_size * n_samples):

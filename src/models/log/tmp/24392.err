@@ -1,0 +1,6 @@
+/home/siyao/Apps/anaconda3/envs/WorldModel/lib/python3.8/site-packages/gymnasium/core.py:311: UserWarning: [33mWARN: env.width to get variables from other wrappers is deprecated and will be removed in v1.0, to get this variable you can do `env.unwrapped.width` for environment variables or `env.get_wrapper_attr('width')` that will search the reminding wrappers.[0m
+  logger.warn(
+/home/siyao/Apps/anaconda3/envs/WorldModel/lib/python3.8/site-packages/gymnasium/core.py:311: UserWarning: [33mWARN: env.height to get variables from other wrappers is deprecated and will be removed in v1.0, to get this variable you can do `env.unwrapped.height` for environment variables or `env.get_wrapper_attr('height')` that will search the reminding wrappers.[0m
+  logger.warn(
+/home/siyao/Apps/anaconda3/envs/WorldModel/lib/python3.8/site-packages/gymnasium/core.py:311: UserWarning: [33mWARN: env.get_frame to get variables from other wrappers is deprecated and will be removed in v1.0, to get this variable you can do `env.unwrapped.get_frame` for environment variables or `env.get_wrapper_attr('get_frame')` that will search the reminding wrappers.[0m
+  logger.warn(
