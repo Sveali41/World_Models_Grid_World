@@ -130,3 +130,5 @@ outputs/
 notes.txt
 papers/
 *npz
+*.wandb
+/wandb/

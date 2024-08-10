@@ -21,7 +21,7 @@ def main(cfg: DictConfig):
         rew = - rg.rollout(params=None)
         count_rewards.update([rew])
         cumulative_reward += rew
-        print("after {} rollouts: , reward:{}, cumulative reward ".format(i, rew, cumulative_reward))
+            print("after {} rollouts: , reward:{}, cumulative reward:{} ".format(i, rew, cumulative_reward))
     print("Avg Reward {}".format(cumulative_reward/n_rollouts))
 
     plt.figure(figsize=(10,10))
